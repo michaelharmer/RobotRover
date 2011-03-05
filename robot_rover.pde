@@ -81,7 +81,7 @@ int comparison_fn(const void *a, const void *b)
  return ((const int *) a) < ((const int *) b); 
 }
 
-#define NUM_READINGS 7
+#define NUM_READINGS 11
 int distanceAt(int angle)
 {
   int reading[NUM_READINGS];
@@ -98,27 +98,25 @@ int distanceAt(int angle)
 
 void turn_right()
 {
-  turn_right(180, 180); 
-  delay(400);
-  stop_moving();
+  turn_right(160, 160); 
+  delay(5);
 }
 
 void turn_left()
 {
-  turn_left(180, 180); 
-  delay(400);
-  stop_moving();
+  turn_left(160, 160); 
+  delay(5);
 }
 
-void forward(int time = 30)
+void forward(int time = 5)
 {
-  forward(130,130);
+  forward(120,120);
   delay(time);  
 }
 
-void backward(int time = 30)
+void backward(int time = 5)
 {
-  backward(130,130);
+  backward(120,120);
   delay(time);  
 }
 
@@ -130,16 +128,16 @@ void loop()
   //Serial.println(val);
   //delay(1000);
   
-  if (val > 30)
+  if (val > 25)
   {
     forward();
     current_turn = NO_TURN;
   } else
   {
-    stop_moving(); 
     switch (current_turn)
     {
       case NO_TURN:
+        stop_moving(); 
         left = distanceAt(160);
         right = distanceAt(20);
         if (left < right)

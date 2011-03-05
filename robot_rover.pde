@@ -1,4 +1,10 @@
 #include <Servo.h>
+#include <stdlib.h>
+
+#define LEFT -1
+#define RIGHT 1
+#define NO_TURN 0
+
  
 Servo myservo;  // create servo object to control a servo
                 // a maximum of eight servo objects can be created
@@ -11,8 +17,9 @@ int M1 = 4;	//M1 Direction Control
 int M2 = 7;	//M1 Direction Control
 
 int ultraSoundSignal = 1; // Ultrasound signal pin ANALOG-0
-int val = 0;
+int val = 0, left, right;
 int ultrasoundValue = 0;
+int current_turn = NO_TURN;
 
 int turnButton = 3;
 
@@ -50,20 +57,12 @@ analogWrite (E2,b);
 digitalWrite(M2,LOW);
 }
 
-void turnRight()
-{
-  turn_right(150,150);
-  delay(2000);
-  stop_moving();
-}
-
-
 void setup(void)
 {
   for(int i=4;i<=7;i++)
     pinMode(i, OUTPUT);
     
-  myservo.attach(10,800,2200);  
+  myservo.attach(10);  
   myservo.write(90);
   delay(50);
   //Serial.begin(19200);
@@ -73,64 +72,91 @@ void setup(void)
 void writeDistance()
 {
   val = analogRead(ultraSoundSignal); 
- Serial.println(val); 
+  Serial.println(val); 
+}
+
+
+int comparison_fn(const void *a, const void *b)
+{
+ return ((const int *) a) < ((const int *) b); 
+}
+
+#define NUM_READINGS 7
+int distanceAt(int angle)
+{
+  int reading[NUM_READINGS];
+  myservo.write(angle);
+  delay(600);
+  for (int i = 0; i < NUM_READINGS; i++) 
+  {
+    reading[i] = analogRead(ultraSoundSignal);    
+  }
+  qsort(reading, sizeof(int) * NUM_READINGS, sizeof(int), comparison_fn);
+  
+  return reading[(int) floor(NUM_READINGS / 2.0)]; 
+}
+
+void turn_right()
+{
+  turn_right(180, 180); 
+  delay(400);
+  stop_moving();
+}
+
+void turn_left()
+{
+  turn_left(180, 180); 
+  delay(400);
+  stop_moving();
+}
+
+void forward(int time = 30)
+{
+  forward(130,130);
+  delay(time);  
+}
+
+void backward(int time = 30)
+{
+  backward(130,130);
+  delay(time);  
 }
 
 void loop()
 {
-  val = analogRead(ultraSoundSignal); 
+  int left, right;
+  
+  val = distanceAt(90); 
   //Serial.println(val);
-  if (val > 35)
+  //delay(1000);
+  
+  if (val > 30)
   {
-    forward(130,130);
-    delay(30);  
-  } else if (val < 25)
-  {
-    backward(130, 130);
-   delay(30); 
+    forward();
+    current_turn = NO_TURN;
   } else
   {
-   stop_moving(); 
+    stop_moving(); 
+    switch (current_turn)
+    {
+      case NO_TURN:
+        left = distanceAt(160);
+        right = distanceAt(20);
+        if (left < right)
+          current_turn = RIGHT;
+        else
+          current_turn = LEFT;
+        break;
+      case RIGHT:
+        turn_right();
+        break;
+      case LEFT:
+        turn_left();
+        break;  
+    }
+    
   }
   
-  /*if (digitalRead(turnButton) == LOW)
-  {
-  for(pos = 0; pos < 180; pos += 1)  // goes from 0 degrees to 180 degrees
-  {                                  // in steps of 1 degree
-    myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(15);                       // waits 15ms for the servo to reach the position
-    //writeDistance();
-  }
-  for(pos = 180; pos>=1; pos-=1)     // goes from 180 degrees to 0 degrees
-  {                                
-    myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(15);                       // waits 15ms for the servo to reach the position
-    //writeDistance();
-  }
-      
-}
-  
-  
-  myservo.write(90); 
-  writeDistance();
-  delay(1000);
-  
- 
-  
-  for(pos = 0; pos < 180; pos += 1)  // goes from 0 degrees to 180 degrees
-  {                                  // in steps of 1 degree
-    myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(15);                       // waits 15ms for the servo to reach the position
-    writeDistance();
-  }
-  for(pos = 180; pos>=1; pos-=1)     // goes from 180 degrees to 0 degrees
-  {                                
-    myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(15);                       // waits 15ms for the servo to reach the position
-    writeDistance();
-  }
-  
-  */
 }
 
 
